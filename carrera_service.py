@@ -6,14 +6,29 @@ from utils import ensure_csv_exists
 FILEPATH = "data/carreras.csv"
 
 def _load_carreras() -> List[Carrera]:
-    ensure_csv_exists(FILEPATH, ["id", "nombre", "pais", "fecha", "ganador", "vueltas", "activo"])
-    raw = read_csv(FILEPATH)
-    return [Carrera(**{
-        **item,
-        "id": int(item["id"]),
-        "vueltas": int(item["vueltas"]),
-        "activo": item["activo"] == "True"
-    }) for item in raw]
+    try:
+        ensure_csv_exists(FILEPATH, ["id", "nombre", "pais", "fecha", "ganador", "vueltas", "activo"])
+        raw = read_csv(FILEPATH)
+        carreras = []
+
+        for item in raw:
+            try:
+                carrera = Carrera(
+                    id=int(item["id"]),
+                    nombre=item["nombre"],
+                    pais=item["pais"],
+                    fecha=item["fecha"],
+                    ganador=item["ganador"],
+                    vueltas=int(item["vueltas"]),
+                    activo=item["activo"] == "True"
+                )
+                carreras.append(carrera)
+            except (KeyError, ValueError, TypeError) as e:
+                raise ValueError(f"Error al convertir datos de una carrera: {e}")
+        return carreras
+
+    except Exception as e:
+        raise RuntimeError(f"No se pudieron cargar las carreras desde el archivo '{FILEPATH}': {e}")
 
 def _save_carreras(carreras: List[Carrera]):
     data = [c.dict() for c in carreras]
