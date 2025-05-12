@@ -10,7 +10,6 @@ from typing import List
 app = FastAPI()
 
 
-
 @app.get("/pilotos", response_model=List[Piloto])
 def listar_pilotos():
     return piloto_service.get_all_pilotos()
