@@ -7,14 +7,19 @@ from utils import ensure_csv_exists
 FILEPATH = "data/pilotos.csv"
 
 def _load_pilotos() -> List[Piloto]:
-    ensure_csv_exists(FILEPATH, ["id", "nombre", "escuderia", "nacionalidad", "puntos", "activo"])
-    raw = read_csv(FILEPATH)
-    return [Piloto(**{
-        **item,
-        "id": int(item["id"]),
-        "puntos": int(item["puntos"]),
-        "activo": item["activo"] == "True"
-    }) for item in raw]
+    try:
+        ensure_csv_exists(FILEPATH, ["id", "nombre", "escuderia", "nacionalidad", "puntos", "activo"])
+        raw = read_csv(FILEPATH)
+        return [Piloto(**{
+            **item,
+            "id": int(item["id"]),
+            "puntos": int(item["puntos"]),
+            "activo": item["activo"] == "True"
+        }) for item in raw]
+    except (KeyError, ValueError) as e:
+        raise RuntimeError(f"Error al cargar pilotos desde el CSV: {e}")
+    except Exception as e:
+        raise RuntimeError(f"Error inesperado al leer pilotos: {e}")
 
 def _save_pilotos(pilotos: List[Piloto]):
     data = [p.dict() for p in pilotos]
