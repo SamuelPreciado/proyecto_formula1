@@ -31,8 +31,11 @@ def _load_carreras() -> List[Carrera]:
         raise RuntimeError(f"No se pudieron cargar las carreras desde el archivo '{FILEPATH}': {e}")
 
 def _save_carreras(carreras: List[Carrera]):
-    data = [c.dict() for c in carreras]
-    write_csv(FILEPATH, data)
+    try:
+        data = [c.dict() for c in carreras]
+        write_csv(FILEPATH, data)
+    except Exception as e:
+        raise RuntimeError(f"No se pudieron guardar las carreras en el archivo '{FILEPATH}': {e}")
 
 def get_all_carreras() -> List[Carrera]:
     return [c for c in _load_carreras() if c.activo]
