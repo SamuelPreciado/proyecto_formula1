@@ -22,8 +22,11 @@ def _load_pilotos() -> List[Piloto]:
         raise RuntimeError(f"Error inesperado al leer pilotos: {e}")
 
 def _save_pilotos(pilotos: List[Piloto]):
-    data = [p.dict() for p in pilotos]
-    write_csv(FILEPATH, data)
+    try:
+        data = [p.dict() for p in pilotos]
+        write_csv(FILEPATH, data)
+    except Exception as e:
+        raise RuntimeError(f"Error al guardar pilotos: {e}")
 
 def get_all_pilotos() -> List[Piloto]:
     return [p for p in _load_pilotos() if p.activo]
