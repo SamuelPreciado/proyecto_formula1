@@ -29,6 +29,10 @@ def crear_piloto(piloto: Piloto):
         return {"mensaje": "Piloto creado exitosamente"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Error interno al crear piloto")
 
 @app.put("/pilotos/{piloto_id}")
 def actualizar_piloto(piloto_id: int, piloto: Piloto):
