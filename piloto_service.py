@@ -37,10 +37,17 @@ def get_piloto_by_id(piloto_id: int) -> Optional[Piloto]:
             return piloto
     return None
 
+
 def create_piloto(piloto: Piloto):
+    if piloto.id < 0:
+        raise ValueError("El ID del piloto debe ser un número positivo")
+    if not piloto.nombre.strip():
+        raise ValueError("El nombre del piloto no puede estar vacío")
+
     pilotos = _load_pilotos()
     if any(p.id == piloto.id for p in pilotos):
         raise ValueError(f"Ya existe un piloto con ID {piloto.id}")
+
     pilotos.append(piloto)
     _save_pilotos(pilotos)
 
