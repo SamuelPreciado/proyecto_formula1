@@ -6,10 +6,14 @@ from models_carrera import Carrera
 import carrera_service as carrera_service
 from models_respuesta import RespuestaBorrados
 from typing import List
-
+from database_connection import init_db
 app = FastAPI()
 
 
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
 
 @app.get("/pilotos", response_model=List[Piloto])
