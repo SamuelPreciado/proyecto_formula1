@@ -1,83 +1,60 @@
-
 from typing import List, Optional
+from sqlmodel import select
 from models_carrera import Carrera
-from utils import read_csv, write_csv
-from utils import ensure_csv_exists
-FILEPATH = "data/carreras.csv"
+from fastapi import Depends
+from sqlalchemy.exc import SQLAlchemyError
+from sqlmodel.ext.asyncio.session import AsyncSession
+from database_connection import get_session
 
-def _load_carreras() -> List[Carrera]:
-    try:
-        ensure_csv_exists(FILEPATH, ["id", "nombre", "pais", "fecha", "ganador", "vueltas", "activo"])
-        raw = read_csv(FILEPATH)
-        carreras = []
+async def get_all_carreras(session: AsyncSession = Depends(get_session)) -> List[Carrera]:
+    result = await session.execute(select(Carrera).where(Carrera.activo == True))
+    return result.scalars().all()
 
-        for item in raw:
-            try:
-                carrera = Carrera(
-                    id=int(item["id"]),
-                    nombre=item["nombre"],
-                    pais=item["pais"],
-                    fecha=item["fecha"],
-                    ganador=item["ganador"],
-                    vueltas=int(item["vueltas"]),
-                    activo=item["activo"] == "True"
-                )
-                carreras.append(carrera)
-            except (KeyError, ValueError, TypeError) as e:
-                raise ValueError(f"Error al convertir datos de una carrera: {e}")
-        return carreras
+async def get_carrera_by_id(carrera_id: int, session: AsyncSession = Depends(get_session)) -> Optional[Carrera]:
+    return await session.get(Carrera, carrera_id)
 
-    except Exception as e:
-        raise RuntimeError(f"No se pudieron cargar las carreras desde el archivo '{FILEPATH}': {e}")
-
-def _save_carreras(carreras: List[Carrera]):
-    try:
-        data = [c.dict() for c in carreras]
-        write_csv(FILEPATH, data)
-    except Exception as e:
-        raise RuntimeError(f"No se pudieron guardar las carreras en el archivo '{FILEPATH}': {e}")
-
-def get_all_carreras() -> List[Carrera]:
-    return [c for c in _load_carreras() if c.activo]
-
-def get_carrera_by_id(carrera_id: int) -> Optional[Carrera]:
-    for carrera in _load_carreras():
-        if carrera.id == carrera_id:
-            return carrera
-    return None
-
-def create_carrera(carrera: Carrera):
-    carreras = _load_carreras()
-    if any(c.id == carrera.id for c in carreras):
+async def create_carrera(carrera: Carrera, session: AsyncSession = Depends(get_session)):
+    existing = await session.get(Carrera, carrera.id)
+    if existing:
         raise ValueError(f"Ya existe una carrera con ID {carrera.id}")
-    carreras.append(carrera)
-    _save_carreras(carreras)
+    session.add(carrera)
+    try:
+        await session.commit()
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise RuntimeError(f"Error al crear carrera: {e}")
 
-def update_carrera(carrera_id: int, updated: Carrera):
-    carreras = _load_carreras()
-    found = False
-    for i, c in enumerate(carreras):
-        if c.id == carrera_id:
-            carreras[i] = updated
-            found = True
-            break
-    if not found:
+async def update_carrera(carrera_id: int, updated: Carrera, session: AsyncSession = Depends(get_session)):
+    existing = await session.get(Carrera, carrera_id)
+    if not existing:
         raise ValueError(f"No se encontró carrera con ID {carrera_id}")
-    _save_carreras(carreras)
+    updated.id = carrera_id
+    session.add(updated)
+    try:
+        await session.commit()
+    except SQLAlchemyError as e:
+        await session.rollback()
+        raise RuntimeError(f"Error al actualizar carrera: {e}")
 
-def delete_carrera(carrera_id: int):
-    carreras = _load_carreras()
-    for carrera in carreras:
-        if carrera.id == carrera_id:
-            carrera.activo = False
-            break
-    _save_carreras(carreras)
+async def delete_carrera(carrera_id: int, session: AsyncSession = Depends(get_session)):
+    carrera = await session.get(Carrera, carrera_id)
+    if carrera:
+        carrera.activo = False
+        session.add(carrera)
+        await session.commit()
 
-def filter_carreras_por_pais(pais: str) -> List[Carrera]:
-    return [c for c in _load_carreras() if c.activo and c.pais.lower() == pais.lower()]
+async def filter_carreras_por_pais(pais: str, session: AsyncSession = Depends(get_session)) -> List[Carrera]:
+    result = await session.execute(
+        select(Carrera).where(Carrera.activo == True, Carrera.pais.ilike(f"%{pais}%"))
+    )
+    return result.scalars().all()
 
-def buscar_carrera_por_ganador(ganador: str) -> List[Carrera]:
-    return [c for c in _load_carreras() if c.activo and ganador.lower() in c.ganador.lower()]
+async def buscar_carrera_por_ganador(ganador: str, session: AsyncSession = Depends(get_session)) -> List[Carrera]:
+    result = await session.execute(
+        select(Carrera).where(Carrera.activo == True, Carrera.ganador.ilike(f"%{ganador}%"))
+    )
+    return result.scalars().all()
 
-def get_carreras_borradas() -> List[Carrera]:
-    return [c for c in _load_carreras() if not c.activo]
+async def get_carreras_borradas(session: AsyncSession = Depends(get_session)) -> List[Carrera]:
+    result = await session.execute(select(Carrera).where(Carrera.activo == False))
+    return result.scalars().all()

@@ -1,21 +1,16 @@
-
-from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi import FastAPI, HTTPException, Depends
 from models_piloto import Piloto
 import piloto_service as piloto_service
 from models_carrera import Carrera
 import carrera_service as carrera_service
 from models_respuesta import RespuestaBorrados
 from typing import List
-from database_connection import init_db
+from sqlalchemy.ext.asyncio import AsyncSession
+from database_connection import get_session
+
 app = FastAPI()
 
-
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
-
-
+# Endpoints Pilotos (sin cambios, siguen usando CSV)
 @app.get("/pilotos", response_model=List[Piloto])
 def listar_pilotos():
     return piloto_service.get_all_pilotos()
@@ -63,57 +58,55 @@ def filtrar_por_escuderia(escuderia: str):
 def buscar_por_nombre(nombre: str):
     return piloto_service.search_piloto_by_nombre(nombre)
 
-# 🧭 Endpoints Carreras
-
+# Endpoints Carreras (usando BD con asincronía)
 @app.get("/carreras", response_model=List[Carrera])
-def listar_carreras():
-    return carrera_service.get_all_carreras()
+async def listar_carreras(session: AsyncSession = Depends(get_session)):
+    return await carrera_service.get_all_carreras(session)
 
 @app.get("/carreras/{carrera_id}", response_model=Carrera)
-def obtener_carrera(carrera_id: int):
-    carrera = carrera_service.get_carrera_by_id(carrera_id)
+async def obtener_carrera(carrera_id: int, session: AsyncSession = Depends(get_session)):
+    carrera = await carrera_service.get_carrera_by_id(carrera_id, session)
     if not carrera or not carrera.activo:
         raise HTTPException(status_code=404, detail="Carrera no encontrada")
     return carrera
 
 @app.post("/carreras", status_code=201)
-def crear_carrera(carrera: Carrera):
+async def crear_carrera(carrera: Carrera, session: AsyncSession = Depends(get_session)):
     try:
-        carrera_service.create_carrera(carrera)
+        await carrera_service.create_carrera(carrera, session)
         return {"mensaje": "Carrera creada exitosamente"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.put("/carreras/{carrera_id}")
-def actualizar_carrera(carrera_id: int, carrera: Carrera):
+async def actualizar_carrera(carrera_id: int, carrera: Carrera, session: AsyncSession = Depends(get_session)):
     try:
-        carrera_service.update_carrera(carrera_id, carrera)
+        await carrera_service.update_carrera(carrera_id, carrera, session)
         return {"mensaje": "Carrera actualizada correctamente"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.delete("/carreras/{carrera_id}")
-def eliminar_carrera(carrera_id: int):
-    carrera = carrera_service.get_carrera_by_id(carrera_id)
+async def eliminar_carrera(carrera_id: int, session: AsyncSession = Depends(get_session)):
+    carrera = await carrera_service.get_carrera_by_id(carrera_id, session)
     if not carrera or not carrera.activo:
         raise HTTPException(status_code=404, detail="Carrera no encontrada")
-    carrera_service.delete_carrera(carrera_id)
+    await carrera_service.delete_carrera(carrera_id, session)
     return {"mensaje": "Carrera eliminada (lógicamente)"}
 
 @app.get("/carreras/pais/{pais}", response_model=List[Carrera])
-def filtrar_por_pais(pais: str):
-    return carrera_service.filter_carreras_por_pais(pais)
+async def filtrar_por_pais(pais: str, session: AsyncSession = Depends(get_session)):
+    return await carrera_service.filter_carreras_por_pais(pais, session)
 
 @app.get("/carreras/buscar/{ganador}", response_model=List[Carrera])
-def buscar_por_ganador(ganador: str):
-    return carrera_service.buscar_carrera_por_ganador(ganador)
+async def buscar_por_ganador(ganador: str, session: AsyncSession = Depends(get_session)):
+    return await carrera_service.buscar_carrera_por_ganador(ganador, session)
 
 @app.get("/borrados", response_model=RespuestaBorrados)
-def obtener_borrados():
+async def obtener_borrados(session: AsyncSession = Depends(get_session)):
     pilotos_borrados = piloto_service.get_pilotos_borrados()
-    carreras_borradas = carrera_service.get_carreras_borradas()
+    carreras_borradas = await carrera_service.get_carreras_borradas(session)
     return {
         "pilotos_eliminados": pilotos_borrados,
         "carreras_eliminadas": carreras_borradas
     }
-

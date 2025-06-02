@@ -1,84 +1,47 @@
-
-
 from typing import List, Optional
+from sqlmodel import select
 from models_piloto import Piloto
-from utils import read_csv, write_csv
-from utils import ensure_csv_exists
-FILEPATH = "data/pilotos.csv"
+from database_connection import get_session
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
-def _load_pilotos() -> List[Piloto]:
-    try:
-        ensure_csv_exists(FILEPATH, ["id", "nombre", "escuderia", "nacionalidad", "puntos", "activo"])
-        raw = read_csv(FILEPATH)
-        return [Piloto(**{
-            **item,
-            "id": int(item["id"]),
-            "puntos": int(item["puntos"]),
-            "activo": item["activo"] == "True"
-        }) for item in raw]
-    except (KeyError, ValueError) as e:
-        raise RuntimeError(f"Error al cargar pilotos desde el CSV: {e}")
-    except Exception as e:
-        raise RuntimeError(f"Error inesperado al leer pilotos: {e}")
+async def get_all_pilotos(session: AsyncSession = Depends(get_session)) -> List[Piloto]:
+    result = await session.execute(select(Piloto).where(Piloto.activo == True))
+    return result.scalars().all()
 
-def _save_pilotos(pilotos: List[Piloto]):
-    try:
-        data = [p.dict() for p in pilotos]
-        write_csv(FILEPATH, data)
-    except Exception as e:
-        raise RuntimeError(f"Error al guardar pilotos: {e}")
+async def get_piloto_by_id(piloto_id: int, session: AsyncSession = Depends(get_session)) -> Optional[Piloto]:
+    return await session.get(Piloto, piloto_id)
 
-def get_all_pilotos() -> List[Piloto]:
-    return [p for p in _load_pilotos() if p.activo]
+async def create_piloto(piloto: Piloto, session: AsyncSession = Depends(get_session)):
+    session.add(piloto)
+    await session.commit()
+    await session.refresh(piloto)
+    return piloto
 
-def get_piloto_by_id(piloto_id: int) -> Optional[Piloto]:
-    for piloto in _load_pilotos():
-        if piloto.id == piloto_id:
-            return piloto
-    return None
+async def update_piloto(piloto_id: int, updated: Piloto, session: AsyncSession = Depends(get_session)):
+    db_piloto = await session.get(Piloto, piloto_id)
+    if not db_piloto:
+        raise ValueError(f"No se encontr\u00f3 piloto con ID {piloto_id}")
+    for key, value in updated.dict().items():
+        setattr(db_piloto, key, value)
+    await session.commit()
+    await session.refresh(db_piloto)
+    return db_piloto
 
+async def delete_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
+    db_piloto = await session.get(Piloto, piloto_id)
+    if db_piloto:
+        db_piloto.activo = False
+        await session.commit()
 
-def create_piloto(piloto: Piloto):
-    if piloto.id < 0:
-        raise ValueError("El ID del piloto debe ser un número positivo")
-    if not piloto.nombre.strip():
-        raise ValueError("El nombre del piloto no puede estar vacío")
+async def filter_pilotos_by_escuderia(escuderia: str, session: AsyncSession = Depends(get_session)) -> List[Piloto]:
+    result = await session.execute(select(Piloto).where(Piloto.escuderia.ilike(f"%{escuderia}%"), Piloto.activo == True))
+    return result.scalars().all()
 
-    pilotos = _load_pilotos()
-    if any(p.id == piloto.id for p in pilotos):
-        raise ValueError(f"Ya existe un piloto con ID {piloto.id}")
+async def search_piloto_by_nombre(nombre: str, session: AsyncSession = Depends(get_session)) -> List[Piloto]:
+    result = await session.execute(select(Piloto).where(Piloto.nombre.ilike(f"%{nombre}%"), Piloto.activo == True))
+    return result.scalars().all()
 
-    pilotos.append(piloto)
-    _save_pilotos(pilotos)
-
-def update_piloto(piloto_id: int, updated: Piloto):
-    pilotos = _load_pilotos()
-    found = False
-    for i, p in enumerate(pilotos):
-        if p.id == piloto_id:
-            pilotos[i] = updated
-            found = True
-            break
-    if not found:
-        raise ValueError(f"No se encontró piloto con ID {piloto_id}")
-    _save_pilotos(pilotos)
-
-def delete_piloto(piloto_id: int):
-    pilotos = _load_pilotos()
-    for piloto in pilotos:
-        if piloto.id == piloto_id:
-            piloto.activo = False
-            break
-    _save_pilotos(pilotos)
-
-def filter_pilotos_by_escuderia(escuderia: str) -> List[Piloto]:
-    return [p for p in _load_pilotos() if p.activo and escuderia.lower() in p.escuderia.lower()]
-
-def search_piloto_by_nombre(nombre: str) -> List[Piloto]:
-    return [p for p in _load_pilotos() if p.activo and nombre.lower() in p.nombre.lower()]
-
-def get_pilotos_borrados() -> List[Piloto]:
-    return [p for p in _load_pilotos() if not p.activo]
-
-
-
+async def get_pilotos_borrados(session: AsyncSession = Depends(get_session)) -> List[Piloto]:
+    result = await session.execute(select(Piloto).where(Piloto.activo == False))
+    return result.scalars().all()
