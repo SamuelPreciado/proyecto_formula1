@@ -1,7 +1,9 @@
-from pydantic import BaseModel # type: ignore
+from sqlmodel import SQLModel, Field
+from typing import Optional
+from datetime import date # type: ignore
 
-class Carrera(BaseModel):
-    id: int
+class Carrera(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
     nombre: str
     pais: str
     fecha: str
