@@ -1,31 +1,35 @@
 from fastapi import FastAPI, HTTPException, Depends
-from models_piloto import Piloto
-import piloto_service as piloto_service
-from models_carrera import Carrera
-import carrera_service as carrera_service
-from models_respuesta import RespuestaBorrados
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-from database_connection import get_session
 
+import piloto_service
+import carrera_service
+from models_piloto import Piloto
+from models_carrera import Carrera
+from models_respuesta import RespuestaBorrados
+from database_connection import get_session
+import asyncio
+from database_connection import init_db
 app = FastAPI()
 
-# Endpoints Pilotos (sin cambios, siguen usando CSV)
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 @app.get("/pilotos", response_model=List[Piloto])
-def listar_pilotos():
-    return piloto_service.get_all_pilotos()
+async def listar_pilotos(session: AsyncSession = Depends(get_session)):
+    return await piloto_service.get_all_pilotos(session)
 
 @app.get("/pilotos/{piloto_id}", response_model=Piloto)
-def obtener_piloto(piloto_id: int):
-    piloto = piloto_service.get_piloto_by_id(piloto_id)
+async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
+    piloto = await piloto_service.get_piloto_by_id(piloto_id, session)
     if not piloto or not piloto.activo:
         raise HTTPException(status_code=404, detail="Piloto no encontrado")
     return piloto
 
 @app.post("/pilotos", status_code=201)
-def crear_piloto(piloto: Piloto):
+async def crear_piloto(piloto: Piloto, session: AsyncSession = Depends(get_session)):
     try:
-        piloto_service.create_piloto(piloto)
+        await piloto_service.create_piloto(piloto, session)
         return {"mensaje": "Piloto creado exitosamente"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -35,30 +39,30 @@ def crear_piloto(piloto: Piloto):
         raise HTTPException(status_code=500, detail="Error interno al crear piloto")
 
 @app.put("/pilotos/{piloto_id}")
-def actualizar_piloto(piloto_id: int, piloto: Piloto):
+async def actualizar_piloto(piloto_id: int, piloto: Piloto, session: AsyncSession = Depends(get_session)):
     try:
-        piloto_service.update_piloto(piloto_id, piloto)
+        await piloto_service.update_piloto(piloto_id, piloto, session)
         return {"mensaje": "Piloto actualizado correctamente"}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
 
 @app.delete("/pilotos/{piloto_id}")
-def eliminar_piloto(piloto_id: int):
-    piloto = piloto_service.get_piloto_by_id(piloto_id)
+async def eliminar_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
+    piloto = await piloto_service.get_piloto_by_id(piloto_id, session)
     if not piloto or not piloto.activo:
         raise HTTPException(status_code=404, detail="Piloto no encontrado")
-    piloto_service.delete_piloto(piloto_id)
+    await piloto_service.delete_piloto(piloto_id, session)
     return {"mensaje": "Piloto eliminado (lógicamente)"}
 
 @app.get("/pilotos/escuderia/{escuderia}", response_model=List[Piloto])
-def filtrar_por_escuderia(escuderia: str):
-    return piloto_service.filter_pilotos_by_escuderia(escuderia)
+async def filtrar_por_escuderia(escuderia: str, session: AsyncSession = Depends(get_session)):
+    return await piloto_service.filter_pilotos_by_escuderia(escuderia, session)
 
 @app.get("/pilotos/buscar/{nombre}", response_model=List[Piloto])
-def buscar_por_nombre(nombre: str):
-    return piloto_service.search_piloto_by_nombre(nombre)
+async def buscar_por_nombre(nombre: str, session: AsyncSession = Depends(get_session)):
+    return await piloto_service.search_piloto_by_nombre(nombre, session)
 
-# Endpoints Carreras (usando BD con asincronía)
+# Endpoints Carreras (con BD y async)
 @app.get("/carreras", response_model=List[Carrera])
 async def listar_carreras(session: AsyncSession = Depends(get_session)):
     return await carrera_service.get_all_carreras(session)
@@ -102,9 +106,10 @@ async def filtrar_por_pais(pais: str, session: AsyncSession = Depends(get_sessio
 async def buscar_por_ganador(ganador: str, session: AsyncSession = Depends(get_session)):
     return await carrera_service.buscar_carrera_por_ganador(ganador, session)
 
+# Endpoint borrados (pilotos y carreras)
 @app.get("/borrados", response_model=RespuestaBorrados)
 async def obtener_borrados(session: AsyncSession = Depends(get_session)):
-    pilotos_borrados = piloto_service.get_pilotos_borrados()
+    pilotos_borrados = await piloto_service.get_pilotos_borrados(session)
     carreras_borradas = await carrera_service.get_carreras_borradas(session)
     return {
         "pilotos_eliminados": pilotos_borrados,
