@@ -56,9 +56,6 @@
                                  <a class="nav-link" href="index.html"> Inicio  </a>
                               </li>
                               <li class="nav-item">
-                                 <a class="nav-link" href="documentacion.html">Documentacion</a>
-                              </li>
-                              <li class="nav-item">
                                  <a class="nav-link" href="diseño.html">Diseño</a>
                               </li>
                               <li class="nav-item">
@@ -75,3 +72,64 @@
             </div>
          </div>
       </header>
+   <!-- Sección: Diagrama de clases y Endpoints -->
+<section class="class_endpoints_section layout_padding">
+   <div class="container">
+      <div class="row">
+         <!-- Diagrama de Clases -->
+         <div class="col-md-6">
+            <div class="titlepage">
+               <h2>Diagrama de Clases</h2>
+               <p>Este diagrama representa las relaciones entre los modelos principales del proyecto: Piloto y Carrera.</p>
+            </div>
+            <div class="img-box">
+               <img src="/static/images/diagrama_clases.png" alt="Diagrama de clases" class="img-fluid rounded shadow">
+            </div>
+         </div>
+
+         <!-- Endpoints -->
+         <div class="col-md-6">
+            <div class="titlepage">
+               <h2>Mapa de Endpoints</h2>
+               <p>A continuación se detallan los endpoints disponibles en la API:</p>
+            </div>
+            <ul class="list-group">
+               <!-- Endpoints Pilotos -->
+               <li class="list-group-item">
+                  <strong>Pilotos:</strong>
+                  <ul>
+                     <li><code>GET /pilotos/</code> → Lista todos los pilotos</li>
+                        <li><code>POST /pilotos/</code> → Crea un nuevo piloto</li>
+                        <li><code>GET /pilotos/{id}</code> → Obtiene pilotos por ID</li>
+                        <li><code>PUT /pilotos/{id}</code> → Actualiza un piloto</li>
+                        <li><code>GET /pilotos/{id}</code> → Filtra pilotos por escuderia</li>
+                        <li><code>GET /pilotos/{id}</code> → Obtiene pilotos por nombre</li>
+                        <li><code>DELETE /pilotos/{id}</code> → Elimina un piloto</li>
+                  </ul>
+               </li>
+
+               <!-- Endpoints Carreras -->
+               <li class="list-group-item">
+                  <strong>Carreras:</strong>
+                  <ul>
+                     <li><code>GET /carreras/</code> → Lista todas las carreras</li>
+                        <li><code>POST /carreras/</code> → Crea una nueva carrera</li>
+                        <li><code>GET /carreras/{id}</code> → Obtiene carrera por ID</li>
+                        <li><code>PUT /carreras/{id}</code> → Actualiza una carrera</li>
+                        <li><code>GET /carreras/{id}</code> → Filtra carreras por pais</li>
+                        <li><code>GET /carreras/{id}</code> → Obtiene carreras por ganador</li>
+                        <li><code>DELETE /carreras/{id}</code> → Elimina una carrera</li>
+                  </ul>
+               </li>
+
+               <li class="list-group-item">
+                  <strong> Endpoints - Borrados</strong>
+                  <ul>
+                     <li><code>GET /borrados</code> → Obtiene los pilotos y las carreras borradas</li>
+                  </ul>
+               </li>
+            </ul>
+         </div>
+      </div>
+   </div>
+</section>
