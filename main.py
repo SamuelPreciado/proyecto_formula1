@@ -1,14 +1,15 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import piloto_service
 import carrera_service
 from models_piloto import Piloto
 from models_carrera import Carrera
 from models_respuesta import RespuestaBorrados
 from database_connection import get_session
-import asyncio
 from database_connection import init_db
 app = FastAPI()
 
@@ -16,6 +17,16 @@ app = FastAPI()
 @app.on_event("startup")
 async def on_startup():
     await init_db()
+
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+# Cargar carpeta de templates
+templates = Jinja2Templates(directory="templates")
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 @app.get("/pilotos", response_model=List[Piloto])
 async def listar_pilotos(session: AsyncSession = Depends(get_session)):
     return await piloto_service.get_all_pilotos(session)
