@@ -33,11 +33,14 @@ templates = Jinja2Templates(directory="templates")
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 @app.get("/pilotos", response_model=List[Piloto])
-async def listar_pilotos(session: AsyncSession = Depends(get_session)):
-    try:
-        return await piloto_service.get_all_pilotos(session)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+async def listar_pilotos():
+    async with get_session() as session:
+        try:
+            return await piloto_service.get_all_pilotos(session)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+
 
 
 @app.get("/pilotos/{piloto_id}", response_model=Piloto)
@@ -48,16 +51,14 @@ async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_ses
     return piloto
 
 @app.post("/pilotos", status_code=201)
-async def crear_piloto(piloto: Piloto, session: AsyncSession = Depends(get_session)):
-    try:
-        await piloto_service.create_piloto(piloto, session)
-        return {"mensaje": "Piloto creado exitosamente"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except RuntimeError as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Error interno al crear piloto")
+async def crear_piloto(piloto: Piloto):
+    async with get_session() as session:
+        try:
+            await piloto_service.create_piloto(piloto, session)
+            return {"mensaje": "Piloto creado exitosamente"}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
 
 @app.put("/pilotos/{piloto_id}")
 async def actualizar_piloto(piloto_id: int, piloto: Piloto, session: AsyncSession = Depends(get_session)):
