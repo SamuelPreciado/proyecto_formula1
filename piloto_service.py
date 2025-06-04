@@ -4,17 +4,21 @@ from models_piloto import Piloto
 from sqlalchemy.ext.asyncio import AsyncSession
 
 async def get_all_pilotos(session: AsyncSession) -> List[Piloto]:
-    result = await session.execute(select(Piloto).where(Piloto.activo == True))
-    return result.scalars().all()
+    async with session.begin():
+        result = await session.execute(
+            select(Piloto).where(Piloto.activo == True)
+        )
+        return result.scalars().all()
+
 
 async def get_piloto_by_id(piloto_id: int, session: AsyncSession) -> Optional[Piloto]:
     return await session.get(Piloto, piloto_id)
 
 async def create_piloto(piloto: Piloto, session: AsyncSession):
-    session.add(piloto)
-    await session.commit()
-    await session.refresh(piloto)
-    return piloto
+    async with session.begin():
+        session.add(piloto)
+        await session.commit()
+
 
 async def update_piloto(piloto_id: int, updated: Piloto, session: AsyncSession):
     db_piloto = await session.get(Piloto, piloto_id)

@@ -9,7 +9,7 @@ import carrera_service
 from models_piloto import Piloto
 from models_carrera import Carrera
 from models_respuesta import RespuestaBorrados
-from database_connection import get_session
+from database_connection import get_session, engine
 from database_connection import init_db
 app = FastAPI()
 
@@ -17,6 +17,11 @@ app = FastAPI()
 @app.on_event("startup")
 async def on_startup():
     await init_db()
+
+@app.on_event("shutdown")
+async def shutdown():
+    await engine.dispose()
+
 
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -29,7 +34,11 @@ async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 @app.get("/pilotos", response_model=List[Piloto])
 async def listar_pilotos(session: AsyncSession = Depends(get_session)):
-    return await piloto_service.get_all_pilotos(session)
+    try:
+        return await piloto_service.get_all_pilotos(session)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error en la base de datos: {str(e)}")
+
 
 @app.get("/pilotos/{piloto_id}", response_model=Piloto)
 async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
