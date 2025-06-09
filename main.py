@@ -162,6 +162,13 @@ async def get_eliminar_carrera(request: Request):
         name="/eliminar_carrera.html",
         context={"request": request, "titulo": "Eliminar carrera"},
     )
+@app.get("/obtener_borrados.html")
+@app.get("/obtener_borrados.html")
+async def get_obtener_borrados(request: Request):
+    return templates.TemplateResponse(
+        name="/obtener_borrados.html",
+        context={"request": request, "titulo": "Obtener borrados"},
+    )
 
 # ------------------ PILOTOS ------------------
 @app.get("/pilotos", response_model=List[Piloto])
