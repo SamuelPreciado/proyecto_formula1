@@ -3,6 +3,7 @@ from sqlmodel import select
 from models_carrera import Carrera
 from fastapi import Depends
 from sqlalchemy.exc import SQLAlchemyError
+from fastapi import HTTPException
 from sqlmodel.ext.asyncio.session import AsyncSession
 from database_connection import get_session
 
@@ -24,17 +25,27 @@ async def create_carrera(carrera: Carrera, session: AsyncSession = Depends(get_s
         await session.rollback()
         raise RuntimeError(f"Error al crear carrera: {e}")
 
-async def update_carrera(carrera_id: int, updated: Carrera, session: AsyncSession = Depends(get_session)):
-    existing = await session.get(Carrera, carrera_id)
-    if not existing:
-        raise ValueError(f"No se encontró carrera con ID {carrera_id}")
-    updated.id = carrera_id
-    session.add(updated)
+async def update_carrera(carrera_id: int, updated: Carrera, session: AsyncSession) -> Carrera:
     try:
-        await session.commit()
-    except SQLAlchemyError as e:
-        await session.rollback()
-        raise RuntimeError(f"Error al actualizar carrera: {e}")
+        stmt = select(Carrera).where(Carrera.id == carrera_id)
+        result = await session.execute(stmt)
+        db_carrera = result.scalar_one_or_none()
+
+        if not db_carrera:
+            raise HTTPException(status_code=404, detail=f"Carrera con ID {carrera_id} no encontrado")
+
+        # Actualizar solo los campos no nulos
+        update_data = updated.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            setattr(db_carrera, key, value)
+
+        await session.commit()  # <-- ESTO FALTABA
+        await session.refresh(db_carrera)
+        return db_carrera
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar carrera: {str(e)}")
 
 async def delete_carrera(carrera_id: int, session: AsyncSession = Depends(get_session)):
     carrera = await session.get(Carrera, carrera_id)

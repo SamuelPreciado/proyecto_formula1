@@ -1,19 +1,19 @@
 from fastapi import FastAPI, HTTPException, Depends, Request
-from typing import List
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from typing import List
 import piloto_service
 import carrera_service
 from models_piloto import Piloto
 from models_carrera import Carrera
 from models_respuesta import RespuestaBorrados
-from database_connection import get_session, engine
-from database_connection import init_db
+from database_connection import get_session, engine, init_db
+
 app = FastAPI()
 
-
+# Eventos
 @app.on_event("startup")
 async def on_startup():
     await init_db()
@@ -22,26 +22,18 @@ async def on_startup():
 async def shutdown():
     await engine.dispose()
 
-
-
+# Configurar archivos estáticos y templates
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Cargar carpeta de templates
 templates = Jinja2Templates(directory="templates")
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
+
+# ------------------ PILOTOS ------------------
 @app.get("/pilotos", response_model=List[Piloto])
-async def listar_pilotos():
-    async with get_session() as session:
-        try:
-            return await piloto_service.get_all_pilotos(session)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-
-
-
+async def listar_pilotos(session: AsyncSession = Depends(get_session)):
+    return await piloto_service.get_all_pilotos(session)
 
 @app.get("/pilotos/{piloto_id}", response_model=Piloto)
 async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
@@ -51,22 +43,15 @@ async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_ses
     return piloto
 
 @app.post("/pilotos", status_code=201)
-async def crear_piloto(piloto: Piloto):
-    async with get_session() as session:
-        try:
-            await piloto_service.create_piloto(piloto, session)
-            return {"mensaje": "Piloto creado exitosamente"}
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+async def crear_piloto(piloto: Piloto, session: AsyncSession = Depends(get_session)):
+    await piloto_service.create_piloto(piloto, session)
+    return {"mensaje": "Piloto creado exitosamente"}
 
 
 @app.put("/pilotos/{piloto_id}")
 async def actualizar_piloto(piloto_id: int, piloto: Piloto, session: AsyncSession = Depends(get_session)):
-    try:
-        await piloto_service.update_piloto(piloto_id, piloto, session)
-        return {"mensaje": "Piloto actualizado correctamente"}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    await piloto_service.update_piloto(piloto_id, piloto, session)
+    return {"mensaje": "Piloto actualizado correctamente"}
 
 @app.delete("/pilotos/{piloto_id}")
 async def eliminar_piloto(piloto_id: int, session: AsyncSession = Depends(get_session)):
@@ -84,7 +69,7 @@ async def filtrar_por_escuderia(escuderia: str, session: AsyncSession = Depends(
 async def buscar_por_nombre(nombre: str, session: AsyncSession = Depends(get_session)):
     return await piloto_service.search_piloto_by_nombre(nombre, session)
 
-# Endpoints Carreras (con BD y async)
+# ------------------ CARRERAS ------------------
 @app.get("/carreras", response_model=List[Carrera])
 async def listar_carreras(session: AsyncSession = Depends(get_session)):
     return await carrera_service.get_all_carreras(session)
@@ -98,19 +83,13 @@ async def obtener_carrera(carrera_id: int, session: AsyncSession = Depends(get_s
 
 @app.post("/carreras", status_code=201)
 async def crear_carrera(carrera: Carrera, session: AsyncSession = Depends(get_session)):
-    try:
-        await carrera_service.create_carrera(carrera, session)
-        return {"mensaje": "Carrera creada exitosamente"}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    await carrera_service.create_carrera(carrera, session)
+    return {"mensaje": "Carrera creada exitosamente"}
 
 @app.put("/carreras/{carrera_id}")
 async def actualizar_carrera(carrera_id: int, carrera: Carrera, session: AsyncSession = Depends(get_session)):
-    try:
-        await carrera_service.update_carrera(carrera_id, carrera, session)
-        return {"mensaje": "Carrera actualizada correctamente"}
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    await carrera_service.update_carrera(carrera_id, carrera, session)
+    return {"mensaje": "Carrera actualizada correctamente"}
 
 @app.delete("/carreras/{carrera_id}")
 async def eliminar_carrera(carrera_id: int, session: AsyncSession = Depends(get_session)):
@@ -128,7 +107,7 @@ async def filtrar_por_pais(pais: str, session: AsyncSession = Depends(get_sessio
 async def buscar_por_ganador(ganador: str, session: AsyncSession = Depends(get_session)):
     return await carrera_service.buscar_carrera_por_ganador(ganador, session)
 
-# Endpoint borrados (pilotos y carreras)
+# ------------------ BORRADOS ------------------
 @app.get("/borrados", response_model=RespuestaBorrados)
 async def obtener_borrados(session: AsyncSession = Depends(get_session)):
     pilotos_borrados = await piloto_service.get_pilotos_borrados(session)

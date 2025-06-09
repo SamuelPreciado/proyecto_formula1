@@ -8,5 +8,5 @@ class Piloto(SQLModel, table=True):
     escuderia: str
     nacionalidad: str
     puntos: int
-    activo: bool = True
+    activo: bool = Field(default=True)
 
