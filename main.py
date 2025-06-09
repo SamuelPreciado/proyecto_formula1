@@ -26,9 +26,142 @@ async def shutdown():
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+
+
+@app.get("/")
+@app.get("/index.html")
+async def read_root(request: Request):
+    return templates.TemplateResponse(
+        name="index.html",
+        context={"request": request, "titulo": "¡Bienvenido a mi Proyecto FastAPI!"},
+    )
+
+@app.get("/diseño.html")
+@app.get("/diseño.html")
+async def get_diseno(request: Request):
+    return templates.TemplateResponse(
+        name="diseño.html",
+        context={"request": request, "titulo": "Diseño Del proyecto"},
+    )
+@app.get("/planeacion.html")
+@app.get("/planeacion.html")
+async def get_planeacion(request: Request):
+    return templates.TemplateResponse(
+        name="planeacion.html",
+        context={"request": request, "titulo": "Planeacion Del proyecto"},
+    )
+@app.get("/pilotos.html")
+@app.get("/pilotos.html.html")
+async def get_pilotos(request: Request):
+    return templates.TemplateResponse(
+        name="pilotos.html",
+        context={"request": request, "titulo": "Pilotos del proyecto"},
+    )
+@app.get("/carreras.html")
+@app.get("/carreras.html")
+async def get_carreras(request: Request):
+    return templates.TemplateResponse(
+        name="carreras.html",
+        context={"request": request, "titulo": "Carreras Del proyecto"},
+    )
+@app.get("/crear_piloto.html")
+@app.get("/crear_piloto.html")
+async def get_crear_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/crear_piloto.html",
+        context={"request": request, "titulo": "Crear piloto"},
+    )
+@app.get("/listar_piloto.html")
+@app.get("/listar_piloto.html")
+async def get_crear_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/listar_piloto.html",
+        context={"request": request, "titulo": "Listar piloto"},
+    )
+@app.get("/obtener_piloto.html")
+@app.get("/obtener_piloto.html")
+async def get_obtener_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/obtener_piloto.html",
+        context={"request": request, "titulo": "obtener piloto"},
+    )
+@app.get("/actualizar_piloto.html")
+@app.get("/actualizar_piloto.html")
+async def get_actualizar_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/actualizar_piloto.html",
+        context={"request": request, "titulo": "Actualizar piloto"},
+    )
+@app.get("/filtrar_escuderia.html")
+@app.get("/filtrar_escuderia.html.html")
+async def get_filtrar_escuderia(request: Request):
+    return templates.TemplateResponse(
+        name="/filtrar_escuderia.html",
+        context={"request": request, "titulo": "Filtrar por escuderia"},
+    )
+@app.get("/buscar_piloto.html")
+@app.get("/buscar_piloto.html")
+async def get_buscar_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/buscar_piloto.html",
+        context={"request": request, "titulo": "Buscar piloto"},
+    )
+@app.get("/eliminar_piloto.html")
+@app.get("/eliminar_piloto.html")
+async def get_eliminar_piloto(request: Request):
+    return templates.TemplateResponse(
+        name="/eliminar_piloto.html",
+        context={"request": request, "titulo": "Eliminar piloto"},
+    )
+@app.get("/crear_carrera.html")
+@app.get("/crear_carrera.html")
+async def get_crear_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/crear_carrera.html",
+        context={"request": request, "titulo": "Crear carrera"},
+    )
+@app.get("/listar_carrera.html")
+@app.get("/listar_carrera.html")
+async def get_listar_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/listar_carrera.html",
+        context={"request": request, "titulo": "Listar carrera"},
+    )
+@app.get("/obtener_carrera.html")
+@app.get("/obtener_carrera.html")
+async def get_obtener_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/obtener_carrera.html",
+        context={"request": request, "titulo": "Obtener carrera"},
+    )
+@app.get("/actualizar_carrera.html")
+@app.get("/actualizar_carrera.html")
+async def get_actualizar_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/actualizar_carrera.html",
+        context={"request": request, "titulo": "Actualizar carrera"},
+    )
+@app.get("/filtrar_pais.html")
+@app.get("/filtrar_pais.html")
+async def get_filtrar_pais(request: Request):
+    return templates.TemplateResponse(
+        name="/filtrar_pais.html",
+        context={"request": request, "titulo": "Filtrar por pais"},
+    )
+@app.get("/buscar_carrera.html")
+@app.get("/buscar_carrera.html")
+async def get_buscar_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/buscar_carrera.html",
+        context={"request": request, "titulo": "Buscar carrera"},
+    )
+@app.get("/eliminar_carrera.html")
+@app.get("/eliminar_carrera.html")
+async def get_eliminar_carrera(request: Request):
+    return templates.TemplateResponse(
+        name="/eliminar_carrera.html",
+        context={"request": request, "titulo": "Eliminar carrera"},
+    )
 
 # ------------------ PILOTOS ------------------
 @app.get("/pilotos", response_model=List[Piloto])
