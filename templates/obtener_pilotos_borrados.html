@@ -30,7 +30,6 @@
   <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script><![endif]-->
 </head>
 <body class="main-layout">
-
   <!-- header -->
   <header>
     <!-- header inner -->
@@ -72,40 +71,87 @@
   </header>
 
   <section class="container mt-5">
-    <h2>Eliminar Piloto</h2>
-    <form id="form-eliminar-piloto">
-      <div class="form-group">
-        <label for="piloto-id">ID del piloto</label>
-        <input type="number" class="form-control" id="piloto-id" required>
-      </div>
-      <button type="submit" class="btn btn-danger mt-3">Eliminar Piloto</button>
-      <div id="mensaje-resultado" class="mt-3"></div>
-    </form>
+    <h2>Pilotos y Carreras Borrados</h2>
+    <div id="resultado-borrados">
+      <div class="text-secondary">Cargando información de elementos eliminados...</div>
+    </div>
   </section>
 
   <script>
-    document.getElementById('form-eliminar-piloto').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const piloto_id = document.getElementById('piloto-id').value;
-      const mensajeDiv = document.getElementById('mensaje-resultado');
-      mensajeDiv.innerHTML = '<div class="text-secondary">Eliminando piloto...</div>';
-
+    async function cargarBorrados() {
+      const resultadoDiv = document.getElementById('resultado-borrados');
+      resultadoDiv.innerHTML = '<div class="text-secondary">Cargando información de elementos eliminados...</div>';
       try {
-        const response = await fetch(`/pilotos/${piloto_id}`, { method: 'DELETE' });
-
+        const response = await fetch('/borrados');
         if (response.ok) {
-          const res = await response.json();
-          mensajeDiv.innerHTML = `<div class="alert alert-success">${res.mensaje}</div>`;
-          document.getElementById('form-eliminar-piloto').reset();
+          const data = await response.json();
+          let html = '';
+
+          // Pilotos eliminados
+          html += `<h4>Pilotos eliminados</h4>`;
+          if (data.pilotos_eliminados && data.pilotos_eliminados.length > 0) {
+            html += `<table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Nombre</th>
+                          <th>Escudería</th>
+                          <th>Nacionalidad</th>
+                          <th>Puntos</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+            data.pilotos_eliminados.forEach(piloto => {
+              html += `<tr>
+                        <td>${piloto.id}</td>
+                        <td>${piloto.nombre}</td>
+                        <td>${piloto.escuderia}</td>
+                        <td>${piloto.nacionalidad}</td>
+                        <td>${piloto.puntos}</td>
+                      </tr>`;
+            });
+            html += `</tbody></table>`;
+          } else {
+            html += `<div class="alert alert-info">No hay pilotos eliminados.</div>`;
+          }
+
+          // Carreras eliminadas
+          html += `<h4 class="mt-4">Carreras eliminadas</h4>`;
+          if (data.carreras_eliminadas && data.carreras_eliminadas.length > 0) {
+            html += `<table class="table table-striped">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Nombre</th>
+                          <th>Ubicación</th>
+                          <th>Fecha</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
+            data.carreras_eliminadas.forEach(carrera => {
+              html += `<tr>
+                        <td>${carrera.id}</td>
+                        <td>${carrera.nombre}</td>
+                        <td>${carrera.pais}</td>
+                        <td>${carrera.fecha ? carrera.fecha : ''}</td>
+                      </tr>`;
+            });
+            html += `</tbody></table>`;
+          } else {
+            html += `<div class="alert alert-info">No hay carreras eliminadas.</div>`;
+          }
+
+          resultadoDiv.innerHTML = html;
         } else {
           const error = await response.json();
-          mensajeDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.detail}</div>`;
+          resultadoDiv.innerHTML = `<div class="alert alert-danger mt-3">Error: ${error.detail}</div>`;
         }
       } catch (err) {
-        mensajeDiv.innerHTML = `<div class="alert alert-danger">Error de red: ${err.message}</div>`;
+        resultadoDiv.innerHTML = `<div class="alert alert-danger mt-3">Error de red: ${err.message}</div>`;
       }
-    });
+    }
+
+    window.addEventListener('DOMContentLoaded', cargarBorrados);
   </script>
 </body>
 </html>

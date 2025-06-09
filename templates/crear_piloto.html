@@ -69,3 +69,75 @@
             </div>
          </div>
       </header>
+
+   <section class="container mt-5">
+   <h2>Crear Nuevo Piloto</h2>
+   <form id="form-crear-piloto">
+      <div class="form-group">
+         <label for="id">ID</label>
+         <input type="number" class="form-control" id="id" required>
+      </div>
+      <div class="form-group">
+         <label for="nombre">Nombre</label>
+         <input type="text" class="form-control" id="nombre" required>
+      </div>
+      <div class="form-group">
+         <label for="escuderia">Escudería</label>
+         <input type="text" class="form-control" id="escuderia" required>
+      </div>
+      <div class="form-group">
+         <label for="nacionalidad">País</label>
+         <input type="text" class="form-control" id="nacionalidad" required>
+      </div>
+      <div class="form-group">
+         <label for="puntos">Puntos</label>
+         <input type="number" class="form-control" id="puntos" required>
+      </div>
+      <div class="form-group">
+         <label for="activo">Activo</label>
+         <select class="form-control" id="activo">
+            <option value="true" selected>Sí</option>
+            <option value="false">No</option>
+         </select>
+      </div>
+      <button type="submit" class="btn btn-primary mt-3">Crear Piloto</button>
+      <div id="mensaje-resultado" class="mt-3"></div>
+        </form>
+    </section>
+   </body>
+<script>
+   document.getElementById('form-crear-piloto').addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      const piloto = {
+         id: parseInt(document.getElementById('id').value),
+         nombre: document.getElementById('nombre').value,
+         escuderia: document.getElementById('escuderia').value,
+         nacionalidad: document.getElementById('nacionalidad').value,
+         puntos: parseInt(document.getElementById('puntos').value),
+         activo: document.getElementById('activo').value === "true"
+      };
+
+      try {
+         const response = await fetch('/pilotos', {
+            method: 'POST',
+            headers: {
+               'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(piloto)
+         });
+
+         const mensajeDiv = document.getElementById('mensaje-resultado');
+
+         if (response.ok) {
+            mensajeDiv.innerHTML = `<div class="alert alert-success">Piloto creado exitosamente.</div>`;
+            document.getElementById('form-crear-piloto').reset();
+         } else {
+            const error = await response.json();
+            mensajeDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.detail}</div>`;
+         }
+      } catch (err) {
+         document.getElementById('mensaje-resultado').innerHTML = `<div class="alert alert-danger">Error de red: ${err.message}</div>`;
+      }
+   });
+</script>
