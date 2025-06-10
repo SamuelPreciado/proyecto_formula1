@@ -105,7 +105,7 @@ async function cargarPilotos() {
       pilotos.forEach(piloto => {
         html += `<tr>
           <td>
-            ${piloto.imagen ? `<img src="/static/uploads/${piloto.imagen}" style="width:60px;max-height:60px;object-fit:cover;">` : "Sin imagen"}
+            ${piloto.imagen ? `<img src="/static/upload/${piloto.imagen}" style="width:60px;max-height:60px;object-fit:cover;">` : "Sin imagen"}
           </td>
           <td>${piloto.id}</td>
           <td>${piloto.nombre}</td>
