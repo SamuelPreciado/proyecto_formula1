@@ -168,12 +168,12 @@ async def get_obtener_pilotos_borrados(request: Request):
         name="obtener_pilotos_borrados.html",
         context={"request": request, "titulo": "Obtener pilotos borrados"},
     )
-@app.get("/obtener_carreras_borrados.html")
-@app.get("/obtener_carreras_borrados.html")
-async def get_obtener_carreras_borrados(request: Request):
+@app.get("/obtener_carreras_borradas.html")
+@app.get("/obtener_carreras_borradas.html")
+async def get_obtener_carreras_borradas(request: Request):
     return templates.TemplateResponse(
-        name="obtener_carreras_borrados.html",
-        context={"request": request, "titulo": "Obtener carreras borrados"},
+        name="obtener_carreras_borradas.html",
+        context={"request": request, "titulo": "Obtener carreras borradas"},
     )
 
 # ------------------ PILOTOS ------------------
