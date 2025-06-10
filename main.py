@@ -120,6 +120,13 @@ async def get_eliminar_piloto(request: Request):
         name="eliminar_piloto.html",
         context={"request": request, "titulo": "Eliminar piloto"},
     )
+@app.get("/crear_carrera_imagen.html")
+@app.get("/crear_carrera_imagen.html")
+async def get_crear_carrera_imagen(request: Request):
+    return templates.TemplateResponse(
+        name="crear_carrera_imagen.html",
+        context={"request": request, "titulo": "Crear carrera con imagen"},
+    )
 @app.get("/crear_carrera.html")
 @app.get("/crear_carrera.html")
 async def get_crear_carrera(request: Request):
@@ -268,6 +275,37 @@ async def obtener_carrera(carrera_id: int, session: AsyncSession = Depends(get_s
         raise HTTPException(status_code=404, detail="Carrera no encontrada")
     return carrera
 
+@app.post("/carreras/crear_con_imagen", status_code=201)
+async def crear_carrera_con_imagen(
+    id: int = Form(...),
+    nombre: str = Form(...),
+    pais: str = Form(...),
+    fecha: str = Form(...),
+    vueltas: int = Form(...),
+    ganador: str = Form(...),
+    activo: bool = Form(...),
+    imagen: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session)
+):
+    upload_dir = "static/uploads"
+    os.makedirs(upload_dir, exist_ok=True)
+    imagen_filename = imagen.filename
+    imagen_path = os.path.join(upload_dir, imagen_filename)
+    with open(imagen_path, "wb") as buffer:
+        shutil.copyfileobj(imagen.file, buffer)
+
+    carrera_data = Carrera(
+        id=id,
+        nombre=nombre,
+        pais=pais,
+        fecha=fecha,
+        vueltas=vueltas,
+        ganador=ganador,
+        activo=activo,
+        imagen=imagen_filename
+    )
+    await carrera_service.create_carrera(carrera_data, session)
+    return {"mensaje": "Carrera creada exitosamente con imagen"}
 @app.post("/carreras", status_code=201)
 async def crear_carrera(carrera: Carrera, session: AsyncSession = Depends(get_session)):
     await carrera_service.create_carrera(carrera, session)

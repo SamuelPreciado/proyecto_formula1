@@ -4,7 +4,6 @@
   <!-- basic -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <!-- mobile metas -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
   <!-- site metas -->
@@ -97,10 +96,22 @@
         const response = await fetch(`/carreras/${id}`);
         if (response.ok) {
           const carrera = await response.json();
+
+          let imagenHtml = "";
+          // Muestra la imagen solo si el campo existe y no está vacío
+          if (carrera.imagen && carrera.imagen.trim() !== "") {
+            imagenHtml = `
+              <div class="text-center mb-3">
+                <img src="/static/uploads/${carrera.imagen}" alt="Imagen de ${carrera.nombre}" class="img-fluid rounded" style="max-width:240px;">
+              </div>
+            `;
+          }
+
           resultadoDiv.innerHTML = `
             <div class="card mt-3">
               <div class="card-header"><b>${carrera.nombre}</b></div>
               <div class="card-body">
+                ${imagenHtml}
                 <ul class="list-group list-group-flush">
                   <li class="list-group-item"><b>ID:</b> ${carrera.id}</li>
                   <li class="list-group-item"><b>País:</b> ${carrera.pais}</li>

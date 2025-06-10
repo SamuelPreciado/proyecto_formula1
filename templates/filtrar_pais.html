@@ -4,7 +4,6 @@
   <!-- basic -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <!-- mobile metas -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="viewport" content="initial-scale=1, maximum-scale=1">
   <!-- site metas -->
@@ -142,31 +141,33 @@
             resultadoDiv.innerHTML = '<div class="alert alert-warning">No se encontraron carreras para ese país.</div>';
             return;
           }
-          let html = `<table class="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>País</th>
-                <th>Mes</th>
-                <th>Vueltas</th>
-                <th>Ganador</th>
-                <th>Activo</th>
-              </tr>
-            </thead>
-            <tbody>`;
+          let html = '';
           carreras.forEach(carrera => {
-            html += `<tr>
-              <td>${carrera.id}</td>
-              <td>${carrera.nombre}</td>
-              <td>${carrera.pais}</td>
-              <td>${extraerMes(carrera.fecha)}</td>
-              <td>${carrera.vueltas !== undefined && carrera.vueltas !== null ? carrera.vueltas : ""}</td>
-              <td>${carrera.ganador ? carrera.ganador : ""}</td>
-              <td>${carrera.activo ? 'Sí' : 'No'}</td>
-            </tr>`;
+            let imagenHtml = '';
+            if (carrera.imagen && carrera.imagen.trim() !== "") {
+              imagenHtml = `
+                <div class="text-center mb-3">
+                  <img src="/static/upload/${carrera.imagen}" alt="Imagen de ${carrera.nombre}" class="img-fluid rounded" style="max-width:220px;">
+                </div>
+              `;
+            }
+            html += `
+              <div class="card mt-3 mb-3">
+                <div class="card-header"><b>${carrera.nombre}</b></div>
+                <div class="card-body">
+                  ${imagenHtml}
+                  <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><b>ID:</b> ${carrera.id}</li>
+                    <li class="list-group-item"><b>País:</b> ${carrera.pais}</li>
+                    <li class="list-group-item"><b>Mes:</b> ${extraerMes(carrera.fecha)}</li>
+                    <li class="list-group-item"><b>Vueltas:</b> ${typeof carrera.vueltas !== 'undefined' && carrera.vueltas !== null ? carrera.vueltas : ''}</li>
+                    <li class="list-group-item"><b>Ganador:</b> ${carrera.ganador ? carrera.ganador : ''}</li>
+                    <li class="list-group-item"><b>Activo:</b> ${carrera.activo ? 'Sí' : 'No'}</li>
+                  </ul>
+                </div>
+              </div>
+            `;
           });
-          html += `</tbody></table>`;
           resultadoDiv.innerHTML = html;
         } else {
           resultadoDiv.innerHTML = `<div class="alert alert-danger">Error al buscar carreras por país.</div>`;
