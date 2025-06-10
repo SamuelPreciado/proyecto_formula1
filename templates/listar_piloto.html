@@ -72,95 +72,59 @@
   </header>
 
   <section class="container mt-5">
-    <h2>Pilotos Activos</h2>
-    <div id="pilotos-lista">
-      <div class="text-secondary">Cargando pilotos...</div>
-    </div>
-  </section>
-
-  <script>
-    async function cargarPilotos() {
-      const contenedor = document.getElementById('pilotos-lista');
-      contenedor.innerHTML = '<div class="text-secondary">Cargando pilotos...</div>';
-      try {
-        const response = await fetch('/pilotos');
-        if (response.ok) {
-          const pilotos = await response.json();
-          if (pilotos.length === 0) {
-            contenedor.innerHTML = '<div class="alert alert-warning">No hay pilotos activos.</div>';
-            return;
-          }
-          let html = `<table class="table table-striped">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Escudería</th>
-                <th>Nacionalidad</th>
-                <th>Puntos</th>
-                <th>Activo</th>
-              </tr>
-            </thead>
-            <tbody>`;
-          pilotos.forEach(piloto => {
-            html += `<tr>
-              <td>${piloto.id}</td>
-              <td>${piloto.nombre}</td>
-              <td>${piloto.escuderia}</td>
-              <td>${piloto.nacionalidad}</td>
-              <td>${piloto.puntos}</td>
-              <td>${piloto.activo ? 'Sí' : 'No'}</td>
-            </tr>`;
-          });
-          html += `</tbody></table>`;
-          contenedor.innerHTML = html;
-        } else {
-          contenedor.innerHTML = `<div class="alert alert-danger">Error al cargar pilotos.</div>`;
-        }
-      } catch (err) {
-        contenedor.innerHTML = `<div class="alert alert-danger">Error de red: ${err.message}</div>`;
+  <h2>Pilotos Activos</h2>
+  <div id="pilotos-lista">
+    <div class="text-secondary">Cargando pilotos...</div>
+  </div>
+</section>
+<script>
+async function cargarPilotos() {
+  const contenedor = document.getElementById('pilotos-lista');
+  contenedor.innerHTML = '<div class="text-secondary">Cargando pilotos...</div>';
+  try {
+    const response = await fetch('/pilotos');
+    if (response.ok) {
+      const pilotos = await response.json();
+      if (pilotos.length === 0) {
+        contenedor.innerHTML = '<div class="alert alert-warning">No hay pilotos activos.</div>';
+        return;
       }
+      let html = `<table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Escudería</th>
+            <th>Nacionalidad</th>
+            <th>Puntos</th>
+            <th>Activo</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      pilotos.forEach(piloto => {
+        html += `<tr>
+          <td>
+            ${piloto.imagen ? `<img src="/static/uploads/${piloto.imagen}" style="width:60px;max-height:60px;object-fit:cover;">` : "Sin imagen"}
+          </td>
+          <td>${piloto.id}</td>
+          <td>${piloto.nombre}</td>
+          <td>${piloto.escuderia}</td>
+          <td>${piloto.nacionalidad}</td>
+          <td>${piloto.puntos}</td>
+          <td>${piloto.activo ? 'Sí' : 'No'}</td>
+        </tr>`;
+      });
+      html += `</tbody></table>`;
+      contenedor.innerHTML = html;
+    } else {
+      contenedor.innerHTML = `<div class="alert alert-danger">Error al cargar pilotos.</div>`;
     }
-
-    // Cargar pilotos al cargar la página
-    window.addEventListener('DOMContentLoaded', cargarPilotos);
-
-    // Enviar formulario y recargar pilotos
-    document.getElementById('form-crear-piloto').addEventListener('submit', async function (e) {
-      e.preventDefault();
-
-      const piloto = {
-        id: parseInt(document.getElementById('id').value),
-        nombre: document.getElementById('nombre').value,
-        escuderia: document.getElementById('escuderia').value,
-        nacionalidad: document.getElementById('nacionalidad').value,
-        puntos: parseInt(document.getElementById('puntos').value),
-        activo: document.getElementById('activo').value === "true"
-      };
-
-      try {
-        const response = await fetch('/pilotos', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(piloto)
-        });
-
-        const mensajeDiv = document.getElementById('mensaje-resultado');
-
-        if (response.ok) {
-          mensajeDiv.innerHTML = `<div class="alert alert-success">Piloto creado exitosamente.</div>`;
-          document.getElementById('form-crear-piloto').reset();
-          cargarPilotos(); // Recargar lista de pilotos
-        } else {
-          const error = await response.json();
-          mensajeDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.detail}</div>`;
-        }
-      } catch (err) {
-        document.getElementById('mensaje-resultado').innerHTML = `<div class="alert alert-danger">Error de red: ${err.message}</div>`;
-      }
-    });
-  </script>
+  } catch (err) {
+    contenedor.innerHTML = `<div class="alert alert-danger">Error de red: ${err.message}</div>`;
+  }
+}
+window.addEventListener('DOMContentLoaded', cargarPilotos);
+</script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, Request
+from fastapi import FastAPI, HTTPException, Depends, Request, UploadFile, File, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -9,7 +9,8 @@ from models_piloto import Piloto
 from models_carrera import Carrera
 from models_respuesta import RespuestaBorrados
 from database_connection import get_session, engine, init_db
-
+import os
+import shutil
 app = FastAPI()
 
 # Eventos
@@ -69,6 +70,13 @@ async def get_crear_piloto(request: Request):
     return templates.TemplateResponse(
         name="crear_piloto.html",
         context={"request": request, "titulo": "Crear piloto"},
+    )
+@app.get("/crear_piloto_imagen.html")
+@app.get("/crear_piloto_imagen.html")
+async def get_crear_piloto_imagen(request: Request):
+    return templates.TemplateResponse(
+        name="crear_piloto_imagen.html",
+        context={"request": request, "titulo": "Crear piloto con imagen"},
     )
 @app.get("/listar_piloto.html")
 @app.get("/listar_piloto.html")
@@ -188,6 +196,39 @@ async def obtener_piloto(piloto_id: int, session: AsyncSession = Depends(get_ses
         raise HTTPException(status_code=404, detail="Piloto no encontrado")
     return piloto
 
+
+@app.post("/pilotos/crear_con_imagen", status_code=201)
+async def crear_piloto_con_imagen(
+        id: int = Form(...),
+        nombre: str = Form(...),
+        escuderia: str = Form(...),
+        nacionalidad: str = Form(...),
+        puntos: int = Form(...),
+        activo: bool = Form(...),
+        imagen: UploadFile = File(...),
+        session: AsyncSession = Depends(get_session)
+):
+    import os
+    import shutil
+
+    uploads_dir = "static/uploads"
+    os.makedirs(uploads_dir, exist_ok=True)
+    imagen_filename = imagen.filename  # <-- ESTE ES EL PARÁMETRO
+    imagen_path = os.path.join(uploads_dir, imagen_filename)
+    with open(imagen_path, "wb") as buffer:
+        shutil.copyfileobj(imagen.file, buffer)
+
+    piloto_data = Piloto(
+        id=id,
+        nombre=nombre,
+        escuderia=escuderia,
+        nacionalidad=nacionalidad,
+        puntos=puntos,
+        activo=activo,
+        imagen=imagen_filename
+    )
+    await piloto_service.create_piloto(piloto_data, session)
+    return {"mensaje": "Piloto creado exitosamente con imagen"}
 @app.post("/pilotos", status_code=201)
 async def crear_piloto(piloto: Piloto, session: AsyncSession = Depends(get_session)):
     await piloto_service.create_piloto(piloto, session)

@@ -1,3 +1,4 @@
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.pool import AsyncAdaptedQueuePool
@@ -39,7 +40,16 @@ Base = declarative_base()
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
+async def agregar_columna():
+    engine = create_async_engine(CLEVER_DB)
+    async with engine.begin() as conn:
+        await conn.execute(text("ALTER TABLE piloto ADD COLUMN imagen VARCHAR;"))
+        await conn.execute(text("ALTER TABLE carrera ADD COLUMN imagen VARCHAR;"))
+    await engine.dispose()
 
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(agregar_columna())
 # Cerrar el engine
 async def close_db_connections():
     await engine.dispose()

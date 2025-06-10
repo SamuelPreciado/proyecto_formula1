@@ -23,7 +23,7 @@
   <!-- Scrollbar Custom CSS -->
   <link rel="stylesheet" href="/static/css/jquery.mCustomScrollbar.min.css">
   <!-- Tweaks for older IEs-->
-  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css">
+  <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/font-awesome/4.0.3/font-awesome.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css" media="screen">
   <!--[if lt IE 9]>
   <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
@@ -93,10 +93,20 @@
         const response = await fetch(`/pilotos/${id}`);
         if (response.ok) {
           const piloto = await response.json();
+          let imagenHtml = '';
+          // Mostrar la imagen solo si existe y no es vacío ni null
+          if (piloto.imagen && piloto.imagen.trim() !== "") {
+            imagenHtml = `
+              <div class="text-center mb-3">
+                <img src="/static/upload/${piloto.imagen}" alt="Imagen de ${piloto.nombre}" class="img-fluid rounded" style="max-width:200px;">
+              </div>
+            `;
+          }
           resultadoDiv.innerHTML = `
             <div class="card mt-3">
               <div class="card-header"><strong>${piloto.nombre}</strong></div>
               <div class="card-body">
+                ${imagenHtml}
                 <ul class="list-group list-group-flush">
                   <li class="list-group-item"><strong>ID:</strong> ${piloto.id}</li>
                   <li class="list-group-item"><strong>Escudería:</strong> ${piloto.escuderia}</li>

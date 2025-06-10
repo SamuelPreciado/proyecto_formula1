@@ -1,4 +1,3 @@
-
 from sqlmodel import SQLModel, Field
 from typing import Optional
 
@@ -9,4 +8,4 @@ class Piloto(SQLModel, table=True):
     nacionalidad: str
     puntos: int
     activo: bool = Field(default=True)
-
+    imagen: Optional[str] = Field(default=None, description="Nombre del archivo de imagen del piloto")
